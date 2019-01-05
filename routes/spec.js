@@ -6,6 +6,7 @@ const buildBans = require('../store/buildBans');
 const buildBoosters = require('../store/buildBoosters');
 const buildSession = require('../store/buildSession');
 const leaderboards = require('../store/leaderboards');
+const { getPlayerProfile } = require('../store/queries');
 const {
   playerNameParam, gameNameParam, typeParam, columnParam, filterParam, sortByParam, limitParam, significantParam,
 } = require('./params');
@@ -604,8 +605,7 @@ const spec = {
         },
       },
     },
-    /*
-    '/profile/{playerName}': {
+    '/profiles/{playerName}': {
       get: {
         tags: [
           'player',
@@ -614,7 +614,6 @@ const spec = {
         description: 'Returns player stats',
         parameters: [
           playerNameParam,
-          },
         ],
         responses: {
           200: {
@@ -657,9 +656,28 @@ const spec = {
             },
           },
         },
+        route: () => '/profiles/:player',
+        func: (req, res) => {
+          getUUID(req.params.player, (err, uuid) => {
+            if (err) {
+              return res.status(404).json({ error: err });
+            }
+            getPlayerProfile(uuid, (profileErr, player) => {
+              if (profileErr || player === null) {
+                buildPlayer(uuid, (err, player) => {
+                  if (err) {
+                    return res.status(500).json({ error: err });
+                  }
+                  return res.json(player);
+                });
+              } else {
+                return res.json(player);
+              }
+            });
+          });
+        },
       },
     },
-    */
     '/guilds/{playerName}': {
       get: {
         tags: [
